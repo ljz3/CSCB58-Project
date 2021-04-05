@@ -372,11 +372,22 @@ response_w:
 	j cont
 	
 respond_to_a:
-	addi $s7, $s7, -4
+	addi $s7, $s7, -4			# move position of ship left
+	li $t5, 128
+	# check if the ship is still on the same row
+	addi $t6, $s7, -16
+	div $t6, $t5
+	mflo $t7
+	div $s7, $t5
+	mflo $t8
+	
+	beq $t7, $t8, response_a
+	addi $s7, $s7, 4			# revert ship movement
+response_a:
 	j cont
 	
 respond_to_s:
-	addi $s7, $s7, 128
+	addi $s7, $s7, 128			# move position of ship down
 	# check new ship location bounds
 	addi $t5, $s7, 256			# add by 2 rows
 	li $t6, BASE_ADDRESS
@@ -389,6 +400,17 @@ response_s:
 		
 respond_to_d:
 	addi $s7, $s7, 4
+	li $t5, 128
+	# check if the ship is still on the same row
+	addi $t6, $s7, -4
+	div $t6, $t5
+	mflo $t7
+	div $s7, $t5
+	mflo $t8
+	
+	beq $t7, $t8, response_d
+	addi $s7, $s7, -4			# revert ship movement
+response_d:
 	j cont
 	
 
