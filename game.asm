@@ -47,6 +47,7 @@
 .text
 	li $t0, BASE_ADDRESS			# $t0 stores the base address for display
 	li $s7, SHIP_HEAD			# $s7 stores the head of the ship
+	li $s0, 3				# $s0 stores the amount of lives the player has
 	
 	# initial position of small asteroid
 	li $v0, 42				# get a random number between 0 and 28
@@ -58,7 +59,7 @@
 	li $t1, 128
 	mult $t1, $a0
 	mflo $t2
-	addi $t2, $t2, -8
+	addi $t2, $t2, -48
 	
 	li $s6, BASE_ADDRESS			# $s6 stores the center of a small asteroid
 	add $s6, $s6, $t2
@@ -89,18 +90,16 @@
 	li $t1, 128
 	mult $t1, $a0
 	mflo $t2
-	addi $t2, $t2, -16
+	addi $t2, $t2, -32
 	
 	li $s4, BASE_ADDRESS			# $s4 stores the center of a large asteroid
 	add $s4, $s4, $t2
 
 
-loop:	li $t1, 0x00ff00			# $t1 stores the green colour code
-	li $t2, 0xffffff			# $t2 stores the white colour code
-	li $t3, 0xff0000			# $t3 stores the red colour code
+loop:	
 	jal clear_display
-#	jal check_collision
-#	jal 
+	jal check_collision
+	jal update_asteroid
 	add $t8, $zero, $zero			# reset user input register
 	# takes in user input
 	li $t9, 0xffff0000 
@@ -109,6 +108,9 @@ loop:	li $t1, 0x00ff00			# $t1 stores the green colour code
 
 	# update display
 cont:	
+	li $t1, 0x00ff00			# $t1 stores the green colour code
+	li $t2, 0xffffff			# $t2 stores the white colour code
+	li $t3, 0xff0000			# $t3 stores the red colour code
 	jal draw_ship
 	jal draw_asteroids
 	li $v0, 32 				# sleep for 20ms
@@ -131,7 +133,7 @@ clear_display:
 	# clear ship
 	sw $zero, 0($s7)			# paint head of the ship green.
 	
-	# paint body of the ship white.
+	# clear body of the ship
 	sw $zero, -4($s7)			# middle
 	sw $zero, -8($s7)
 	sw $zero, -12($s7)
@@ -144,12 +146,39 @@ clear_display:
 	sw $zero, 120($s7)
 	sw $zero, 116($s7)
 	
-	# paint wings of ship red
+	# clear wings of ship
 	sw $zero, -268($s7)			# upper
 	sw $zero, -272($s7)
 	
 	sw $zero, 244($s7)			# lower
 	sw $zero, 240($s7)
+	
+	# clear small asteroid
+	sw $zero, 0($s6)				
+	sw $zero, 4($s6)
+	sw $zero, -128($s6)
+	
+	# clear medium asteroid
+	sw $zero, 0($s5)				
+	sw $zero, -124($s5)
+	sw $zero, 4($s5)	
+	sw $zero, 8($s5)	
+	sw $zero, 132($s5)
+	
+	# clear large asteroid
+	sw $zero, 0($s4)
+	sw $zero, -128($s4)
+	sw $zero, -252($s4)
+	sw $zero, -248($s4)
+	sw $zero, 4($s4)
+	sw $zero, -124($s4)
+	sw $zero, -120($s4)
+	sw $zero, 8($s4)
+	sw $zero, 12($s4)
+	sw $zero, 132($s4)
+	sw $zero, 136($s4)
+	sw $zero, -116($s4)
+	
 	jr $ra
 	
 	
@@ -213,9 +242,133 @@ draw_asteroids:
 	
 	jr $ra					# go back to caller
 
+
+check_collision:
+	# check if upper body of ship overlaps with front of small asteroid
+	add $t0, $zero, $zero
+	addi $t0, $s7, -132
+	
+	add $s3, $ra, $zero 			# store $ra in $s3
+	
+	bne $t0, $s6, next_one
+	jal collision
+	
+next_one:
+	# check if head of ship overlaps with front of small asteroid
+	bne $t0, $s6, next_two
+	jal collision
+next_two:
+	# check if lower body of ship overlaps with front of small asteroid
+	add $t0, $zero, $zero
+	addi $t0, $s7, 124
+	bne $t0, $s6, next_three
+	jal collision
+	
+next_three:
+	# check if upper wing of ship overlaps with front of small asteroid
+	add $t0, $zero, $zero
+	addi $t0, $s7, -244
+	bne $t0, $s6, next_four
+	jal collision
+next_four:
+	# check if lower wing of ship overlaps with front of small asteroid
+	add $t0, $zero, $zero
+	addi $t0, $s7, -244
+	bne $t0, $s6, next_five
+	jal collision
+next_five:
+collision_end:
+	add $ra, $s3, $zero
+	jr $ra
+	
+	
+collision:
+	# update ship life counter
+	addi $s0, $s0, -1
+	sw $t1, BASE_ADDRESS
+	blez $s0, END
+	# jump to $ra
+	jr $ra
+	
+update_asteroid:
+	# advance asteroids closer to the ship
+	addi $s6, $s6, -4 
+	addi $s5, $s5, -4
+	addi $s4, $s4, -4
+	
+	# check if small asteroid is out of bounds
+	li $t1, 128
+	div $s6, $t1
+	mfhi $t0
+	bgtz $t0, next_ast_1
+	
+	# if small asteroid is out of bounds get new starting location for it
+	li $v0, 42				# get a random number between 0 and 28
+	li $a0, 0
+	li $a1, 28
+	syscall
+	
+	addi $a0, $a0, 2			# get the starting address of a small asteroid
+	mult $t1, $a0
+	mflo $t2
+	addi $t2, $t2, -8
+	
+	li $s6, BASE_ADDRESS			# $s6 stores the center of a small asteroid
+	add $s6, $s6, $t2
+	
+next_ast_1:
+	# check if medium asteroid is out of bounds
+	div $s5, $t1
+	mfhi $t0
+	addi $t0, $t0, -4			# subtract 1 from remainder since medium asteroid is odd framed
+	bgtz $t0, next_ast_2
+	# if medium asteroid is out of bounds get new starting location for it
+	li $v0, 42				# get a random number between 0 and 28
+	li $a0, 0
+	li $a1, 28
+	syscall
+	
+	addi $a0, $a0, 2			# get the starting address of a medium asteroid
+	mult $t1, $a0
+	mflo $t2
+	addi $t2, $t2, -12
+	
+	li $s5, BASE_ADDRESS			# $s5 stores the center of a medium asteroid
+	add $s5, $s5, $t2
+
+next_ast_2:
+	# check if large asteroid is out of bounds
+	div $s4, $t1
+	mfhi $t0
+	bgtz $t0, update_ast_end
+	# if medium large is out of bounds get new starting location for it
+	li $v0, 42				# get a random number between 0 and 28
+	li $a0, 0
+	li $a1, 28
+	syscall
+	
+	addi $a0, $a0, 2			# get the starting address of a large asteroid
+	mult $t1, $a0
+	mflo $t2
+	addi $t2, $t2, -16
+	
+	li $s4, BASE_ADDRESS			# $s4 stores the center of a large asteroid
+	add $s4, $s4, $t2
+	
+update_ast_end:
+	jr $ra					# go back to caller
+	
+	
 	
 respond_to_w:
-	addi $s7, $s7, -128
+	addi $s7, $s7, -128			# move position of ship up
+	# check new ship location bounds
+	addi $t5, $s7, -256			# subtract by 2 rows
+	li $t6, BASE_ADDRESS
+	sub $t5, $t5, $t6
+	bgtz, $t5 response_w
+	addi $s7, $s7, 128			# revert ship movement
+response_w:
 	j cont
 	
 respond_to_a:
@@ -224,6 +377,14 @@ respond_to_a:
 	
 respond_to_s:
 	addi $s7, $s7, 128
+	# check new ship location bounds
+	addi $t5, $s7, 256			# add by 2 rows
+	li $t6, BASE_ADDRESS
+	add $t6, $t6, 4096
+	sub $t5, $t5, $t6
+	bltz, $t5 response_s
+	addi $s7, $s7, -128			# revert ship movement
+response_s:
 	j cont
 		
 respond_to_d:
