@@ -14,12 +14,15 @@
 #
 # Which milestoneshave beenreached in this submission?
 # (See the assignment handout for descriptions of the milestones)
-# -Milestone 2 (choose the one the applies)
+# -Milestone 4 (choose the one the applies)
 #
 # Which approved features have been implemented for milestone 4?
 # (See the assignment handout for the list of additional features)
-# 1. (fill in the feature, if any)# 2. (fill in the feature, if any)
-# 3. (fill in the feature, if any)#... (add more if necessary)
+# 1. b. Increase in difficulty as game progresses.
+# 2. c. Scoring system: add a score to the game based on survival time
+# 3. g. Smooth graphics: prevent flicker by carefully erasing and/or redrawing 
+#	only the parts to the frame buffer that have changed
+
 #
 # Link to video demonstration for final submission:
 # -(insert YouTube / MyMedia / other URL here). Make sure we can view it!
@@ -45,7 +48,7 @@
 .eqv BASE_ADDRESS	0x10008000
 .eqv SHIP_HEAD		0x10008818
 .text
-	li $t0, BASE_ADDRESS			# $t0 stores the base address for display
+main:	li $t0, BASE_ADDRESS			# $t0 stores the base address for display
 	li $s7, SHIP_HEAD			# $s7 stores the head of the ship
 	li $s0, 3				# $s0 stores the amount of lives the player has
 	
@@ -103,7 +106,7 @@
 
 
 loop:	
-
+	addi $s1, $s1, 1
 	add $t8, $zero, $zero			# reset user input register
 	# takes in user input
 	li $t9, 0xffff0000 
@@ -131,6 +134,7 @@ keypress_happened:
 	beq $t8, 0x61, respond_to_a		# ASCII code of 'a' 
 	beq $t8, 0x73, respond_to_s		# ASCII code of 's'
 	beq $t8, 0x64, respond_to_d		# ASCII code of 'd'
+	beq $t8, 0x70, respond_to_p		# ASCII code of 'p'
 	j cont
 	
 clear_display:
@@ -141,6 +145,16 @@ clear_display:
 	jal clear_md
 	jal clear_lg
 	add $ra, $s3, $zero
+	jr $ra
+	
+clear_screen:
+	li $t0, BASE_ADDRESS
+	li $t1, 1024
+clear_loop:
+	sw $zero, 0($t0)
+	addi $t0, $t0, 4
+	addi $t1, $t1, -1
+	bgtz $t1, clear_loop
 	jr $ra
 	
 clear_ship:
@@ -451,8 +465,8 @@ lg_collision:
 	mult $s0, $t3				# get location of life to clear
 	mflo $t4 
 	add $t2, $t2, $t4
-	sw $zero, 4($t2)
 	sw $zero, 0($t2)
+	sw $zero, 4($t2)
 	
 	# reduce life counter by 1
 	addi $s0, $s0, -1
@@ -605,8 +619,248 @@ respond_to_d:
 response_d:
 	j cont
 	
+	
+respond_to_p:
+	jal clear_screen
+	j main
+
 
 END:
-	sw $zero, -4($t2)
-	li $v0, 10 				# terminate the program gracefully
+	jal clear_display
+	li $t0, BASE_ADDRESS
+	sw $zero, 0($t0)
+	
+	li $t1, 0xff0000			# store the red color code in $t1
+	
+	sw $t1, 272($t0)			# paint the letter G
+	sw $t1, 400($t0)
+	sw $t1, 528($t0)
+	sw $t1, 656($t0)
+	sw $t1, 784($t0)
+	sw $t1, 912($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1168($t0)
+	
+	sw $t1, 1172($t0)
+	sw $t1, 1176($t0)
+	sw $t1, 1180($t0)
+	sw $t1, 1184($t0)
+	
+	sw $t1, 1056($t0)
+	sw $t1, 928($t0)
+	sw $t1, 800($t0)
+	sw $t1, 672($t0)
+	
+	sw $t1, 668($t0)
+	sw $t1, 664($t0)
+	
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 284($t0)
+	sw $t1, 288($t0)
+	
+	sw $t1, 300($t0)			# paint the letter A
+	sw $t1, 304($t0)
+	sw $t1, 308($t0)
+	
+	sw $t1, 812($t0)
+	sw $t1, 816($t0)
+	sw $t1, 820($t0)
+	
+	sw $t1, 424($t0)
+	sw $t1, 552($t0)
+	sw $t1, 680($t0)
+	sw $t1, 808($t0)
+	sw $t1, 936($t0)
+	sw $t1, 1064($t0)
+	sw $t1, 1192($t0)
+	
+	sw $t1, 440($t0)
+	sw $t1, 568($t0)
+	sw $t1, 696($t0)
+	sw $t1, 824($t0)
+	sw $t1, 952($t0)
+	sw $t1, 1080($t0)
+	sw $t1, 1208($t0)
+	
+	
+	
+	sw $t1, 320($t0)			# paint the letter M
+	sw $t1, 448($t0)
+	sw $t1, 576($t0)
+	sw $t1, 704($t0)
+	sw $t1, 832($t0)
+	sw $t1, 960($t0)
+	sw $t1, 1088($t0)
+	sw $t1, 1216($t0)
+	
+	sw $t1, 336($t0)
+	sw $t1, 464($t0)
+	sw $t1, 592($t0)
+	sw $t1, 720($t0)
+	sw $t1, 848($t0)
+	sw $t1, 976($t0)
+	sw $t1, 1104($t0)
+	sw $t1, 1232($t0)
+	
+	sw $t1, 452($t0)
+	sw $t1, 460($t0)
+	
+	sw $t1, 584($t0)
+	sw $t1, 712($t0)
+	
+	
+	sw $t1, 344($t0)			# paint the letter E
+	sw $t1, 472($t0)
+	sw $t1, 600($t0)
+	sw $t1, 728($t0)
+	sw $t1, 856($t0)
+	sw $t1, 984($t0)
+	sw $t1, 1112($t0)
+	sw $t1, 1240($t0)
+	
+	sw $t1, 348($t0)
+	sw $t1, 352($t0)
+	sw $t1, 356($t0)
+	sw $t1, 360($t0)
+	
+	sw $t1, 732($t0)
+	sw $t1, 736($t0)
+	sw $t1, 740($t0)
+	
+	sw $t1, 1244($t0)
+	sw $t1, 1248($t0)
+	sw $t1, 1252($t0)
+	sw $t1, 1256($t0)
+	
+	
+	sw $t1, 1928($t0)			# paint the letter O
+	sw $t1, 2056($t0)
+	sw $t1, 2184($t0)
+	sw $t1, 2312($t0)
+	sw $t1, 2440($t0)
+	sw $t1, 2568($t0)
+	sw $t1, 2696($t0)
+	sw $t1, 2824($t0)
+	sw $t1, 2952($t0)
+	
+	sw $t1, 1932($t0)
+	sw $t1, 1936($t0)
+	sw $t1, 1940($t0)
+	sw $t1, 1944($t0)
+	
+	sw $t1, 1948($t0)
+	sw $t1, 2076($t0)
+	sw $t1, 2204($t0)
+	sw $t1, 2332($t0)
+	sw $t1, 2460($t0)
+	sw $t1, 2588($t0)
+	sw $t1, 2716($t0)
+	sw $t1, 2844($t0)
+	sw $t1, 2972($t0)
+	
+	sw $t1, 2956($t0)
+	sw $t1, 2960($t0)
+	sw $t1, 2964($t0)
+	sw $t1, 2968($t0)
+	
+	
+	
+	sw $t1, 1956($t0)			# paint the letter V
+	sw $t1, 2084($t0)
+	sw $t1, 2212($t0)
+	sw $t1, 2340($t0)
+	sw $t1, 2468($t0)
+	
+	sw $t1, 1976($t0)
+	sw $t1, 2104($t0)
+	sw $t1, 2232($t0)
+	sw $t1, 2360($t0)
+	sw $t1, 2488($t0)
+	
+	sw $t1, 2600($t0)
+	sw $t1, 2728($t0)
+	
+	sw $t1, 2612($t0)
+	sw $t1, 2740($t0)
+	
+	sw $t1, 2860($t0)
+	sw $t1, 2864($t0)
+	sw $t1, 2988($t0)
+	sw $t1, 2992($t0)
+	
+	
+
+	sw $t1, 1984($t0)			# paint the letter E
+	sw $t1, 2112($t0)
+	sw $t1, 2240($t0)
+	sw $t1, 2368($t0)
+	sw $t1, 2496($t0)
+	sw $t1, 2624($t0)
+	sw $t1, 2752($t0)
+	sw $t1, 2880($t0)
+	sw $t1, 3008($t0)
+	
+	sw $t1, 1988($t0)
+	sw $t1, 1992($t0)
+	sw $t1, 1996($t0)
+	sw $t1, 2000($t0)
+	sw $t1, 2004($t0)
+	
+	sw $t1, 2500($t0)
+	sw $t1, 2504($t0)
+	sw $t1, 2508($t0)
+	
+	sw $t1, 3012($t0)
+	sw $t1, 3016($t0)
+	sw $t1, 3020($t0)
+	sw $t1, 3024($t0)
+	sw $t1, 3028($t0)
+	
+	
+	sw $t1, 2012($t0)			# paint the letter R
+	sw $t1, 2140($t0)
+	sw $t1, 2268($t0)
+	sw $t1, 2396($t0)
+	sw $t1, 2524($t0)
+	sw $t1, 2652($t0)
+	sw $t1, 2780($t0)
+	sw $t1, 2908($t0)
+	sw $t1, 3036($t0)
+	
+	sw $t1, 2016($t0)
+	sw $t1, 2020($t0)
+	sw $t1, 2024($t0)
+	sw $t1, 2028($t0)
+
+	sw $t1, 2528($t0)
+	sw $t1, 2532($t0)
+	sw $t1, 2536($t0)
+	sw $t1, 2540($t0)
+	
+	sw $t1, 2160($t0)
+	sw $t1, 2288($t0)
+	sw $t1, 2416($t0)
+	
+	sw $t1, 2672($t0)
+	sw $t1, 2800($t0)
+	sw $t1, 2928($t0)
+	sw $t1, 3056($t0)
+	
+	li $v0, 1
+	move $a0, $s1     			# print out user's final score
 	syscall
+	
+end_loop:
+	add $t8, $zero, $zero			# reset user input register
+	# takes in user input
+	li $t9, 0xffff0000 
+	lw $t8, 0($t9)
+	beq $t8, 0, no_reset
+	lw $t8, 4($t9) 
+	beq $t8, 0x70, respond_to_p		# ASCII code of 'p'
+no_reset:
+	li $v0, 32 				# sleep for 100ms
+	li $a0, 100
+	syscall
+	j end_loop
