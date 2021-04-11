@@ -134,6 +134,16 @@ keypress_happened:
 	j cont
 	
 clear_display:
+	add $s3, $ra, $zero
+	
+	jal clear_ship
+	jal clear_sm
+	jal clear_md
+	jal clear_lg
+	add $ra, $s3, $zero
+	jr $ra
+	
+clear_ship:
 	# clear ship
 	sw $zero, 0($s7)			# paint head of the ship green.
 	
@@ -156,19 +166,25 @@ clear_display:
 	
 	sw $zero, 244($s7)			# lower
 	sw $zero, 240($s7)
+	jr $ra
 	
+clear_sm:
 	# clear small asteroid
 	sw $zero, 0($s6)				
 	sw $zero, 4($s6)
 	sw $zero, -128($s6)
+	jr $ra
 	
+clear_md:
 	# clear medium asteroid
 	sw $zero, 0($s5)				
 	sw $zero, -124($s5)
 	sw $zero, 4($s5)	
 	sw $zero, 8($s5)	
 	sw $zero, 132($s5)
+	jr $ra
 	
+clear_lg:
 	# clear large asteroid
 	sw $zero, 0($s4)
 	sw $zero, -128($s4)
@@ -182,7 +198,6 @@ clear_display:
 	sw $zero, 132($s4)
 	sw $zero, 136($s4)
 	sw $zero, -116($s4)
-	
 	jr $ra
 	
 	
@@ -254,6 +269,7 @@ check_collision:
 	add $s3, $ra, $zero 			# store $ra in $s3
 
 	# check if small asteroid is close to ship if not branch to next asteroid check
+	# check x-axis
 	li $t8, 128
 	div $s7, $t8
 	mfhi $t9				# store x coordinate of ship in $t9
@@ -272,48 +288,15 @@ check_collision:
 	mflo $t7				# store y coordinate of small asteroid in $t9
 	
 	sub $t6, $t9, $t7			# get the y axis difference of the ship and small asteroid
-	addi $t6, $t6, -3
+	addi $t6, $t6, -2
 	bgtz $t6, col_md_st
 
-	div $s7, $t8
-	mflo $t9				# store y coordinate of ship in $t9
-	
-	div $s6, $t8
-	mflo $t7				# store y coordinate of small asteroid in $t9
-	
-	sub $t6, $t7, $t9			# get the y axis difference of the small asteroid and the ship
-	addi $t6, $t6, 3
+	addi $t6, $t6, 5
 	bltz $t6, col_md_st
 	
-	# check if upper body of ship overlaps with front of small asteroid
-	addi $t0, $s7, -132
-	bne $t0, $s6, col_sm_one
-	jal collision
+	jal sm_collision
 	j collision_end
-col_sm_one:
-	# check if head of ship overlaps with front of small asteroid
-	bne $s7, $s6, col_sm_two
-	jal collision
-	j collision_end
-col_sm_two:
-	# check if lower body of ship overlaps with front of small asteroid
-	addi $t0, $s7, 124
-	bne $t0, $s6, col_sm_three
-	jal collision
-	j collision_end
-col_sm_three:
-	# check if upper wing of ship overlaps with front of small asteroid
-	addi $t0, $s7, -268
-	bne $t0, $s6, col_sm_four
-	jal collision
-	j collision_end
-col_sm_four:
-	# check if lower wing of ship overlaps with front of small asteroid
-	addi $t0, $s7, 244
-	bne $t0, $s6, col_md_st
-	jal collision
-	j collision_end
-	
+
 	
 col_md_st:
 	# check if medium asteroid is close to ship if not branch to next asteroid check
@@ -335,52 +318,15 @@ col_md_st:
 	mflo $t7				# store y coordinate of small asteroid in $t9
 	
 	sub $t6, $t9, $t7			# get the y axis difference of the ship and small asteroid
-	addi $t6, $t6, -4
+	addi $t6, $t6, -3
 	bgtz $t6, col_lg_st
 
-	div $s7, $t8
-	mflo $t9				# store y coordinate of ship in $t9
 	
-	div $s5, $t8
-	mflo $t7				# store y coordinate of small asteroid in $t9
-	
-	sub $t6, $t7, $t9			# get the y axis difference of the small asteroid and the ship
-	addi $t6, $t6, 4
+	addi $t6, $t6, 6
 	bltz $t6, col_lg_st
+	jal md_collision
+	j collision_end
 	
-	# check if upper body of ship overlaps with front of medium asteroid
-	addi $t0, $s7, -132
-	bne $t0, $s5, col_md_one
-	jal collision
-	j collision_end
-col_md_one:
-	# check if head of ship overlaps with center of medium asteroid
-	bne $s7, $s5, col_md_two
-	jal collision
-	j collision_end
-col_md_two:
-	# check if lower body of ship overlaps with front of medium asteroid
-	addi $t0, $s7, 124
-	bne $t0, $s5, col_md_three
-	jal collision
-	j collision_end
-col_md_three:
-	# check if upper wing of ship overlaps with front of medium asteroid
-	addi $t0, $s7, -268
-	bne $t0, $s5, col_md_four
-	jal collision
-	j collision_end
-col_md_four:
-	bne $t0, $s5, col_md_five
-	jal collision
-	j collision_end
-
-col_md_five:
-	# check if lower wing of ship overlaps with front of medium asteroid
-	addi $t0, $s7, 244
-	bne $t0, $s5, col_lg_st
-	jal collision
-	j collision_end
 
 col_lg_st:
 	# check if medium asteroid is close to ship if not branch to next asteroid check
@@ -402,54 +348,23 @@ col_lg_st:
 	mflo $t7				# store y coordinate of small asteroid in $t9
 	
 	sub $t6, $t9, $t7			# get the y axis difference of the ship and small asteroid
-	addi $t6, $t6, -4
+	addi $t6, $t6, -3
 	bgtz $t6, collision_end
 
-	div $s7, $t8
-	mflo $t9				# store y coordinate of ship in $t9
-	
-	div $s4, $t8
-	mflo $t7				# store y coordinate of small asteroid in $t9
-	
-	sub $t6, $t7, $t9			# get the y axis difference of the small asteroid and the ship
-	addi $t6, $t6, 4
+	addi $t6, $t6, 7
 	bltz $t6, collision_end
+	jal lg_collision
+	j collision_end
 	
-	# check if upper body of ship overlaps with front of medium asteroid
-	addi $t0, $s7, -132
-	bne $t0, $s4, col_lg_one
-	jal collision
-	j collision_end
-col_lg_one:
-	# check if head of ship overlaps with center of medium asteroid
-	bne $s7, $s5, col_lg_two
-	jal collision
-	j collision_end
-col_lg_two:
-	# check if lower body of ship overlaps with front of medium asteroid
-	addi $t0, $s7, 124
-	bne $t0, $s4, col_lg_three
-	jal collision
-	j collision_end
-col_lg_three:
-	# check if upper wing of ship overlaps with front of medium asteroid
-	addi $t0, $s7, -268
-	bne $t0, $s4, col_lg_four
-	jal collision
-	j collision_end
-col_lg_four:
-	# check if lower wing of ship overlaps with front of medium asteroid
-	addi $t0, $s7, 244
-	bne $t0, $s4, collision_end
-	jal collision
-	j collision_end
-
 collision_end:
 	add $ra, $s3, $zero
 	jr $ra
+
 	
 	
-collision:
+sm_collision:
+	# save $ra in $s2
+	add $s2, $ra, $zero
 	# update ship life counter
 	li $t2, BASE_ADDRESS
 	li $t3, 4
@@ -458,10 +373,114 @@ collision:
 	add $t2, $t2, $t4
 	sw $zero, 4($t2)
 	sw $zero, 0($t2)
+	
+	# reduce life counter by 1
 	addi $s0, $s0, -1
+	# if life counter reaches 0, end program
 	blez $s0, END
+	
+	jal clear_sm
+	
+	# get new position for small asteroid
+	li $t1, 128
+	li $v0, 42				# get a random number between 0 and 28
+	li $a0, 0
+	li $a1, 28
+	syscall
+	
+	addi $a0, $a0, 3			# get the starting address of a small asteroid
+	mult $t1, $a0
+	mflo $t2
+	addi $t2, $t2, -8
+	
+	li $s6, BASE_ADDRESS			# $s6 stores the center of a small asteroid
+	add $s6, $s6, $t2
+	
+	# restore $ra
+	add $ra, $s2, $zero
 	# jump to $ra
 	jr $ra
+	
+	
+md_collision:
+	# save $ra in $s2
+	add $s2, $ra, $zero
+	# update ship life counter
+	li $t2, BASE_ADDRESS
+	li $t3, 4
+	mult $s0, $t3				# get location of life to clear
+	mflo $t4 
+	add $t2, $t2, $t4
+	sw $zero, 4($t2)
+	sw $zero, 0($t2)
+	
+	# reduce life counter by 1
+	addi $s0, $s0, -1
+	# if life counter reaches 0, end program
+	blez $s0, END
+	
+	jal clear_md
+	
+	# get new position for medium asteroid
+	li $t1, 128
+	li $v0, 42				# get a random number between 0 and 28
+	li $a0, 0
+	li $a1, 28
+	syscall
+	
+	addi $a0, $a0, 3			# get the starting address of a medium asteroid
+	mult $t1, $a0
+	mflo $t2
+	addi $t2, $t2, -8
+	
+	li $s5, BASE_ADDRESS			# $s5 stores the center of a medium asteroid
+	add $s5, $s5, $t2
+	
+	# restore $ra
+	add $ra, $s2, $zero
+	# jump to $ra
+	jr $ra
+	
+	
+lg_collision:
+	# save $ra in $s2
+	add $s2, $ra, $zero
+	# update ship life counter
+	li $t2, BASE_ADDRESS
+	li $t3, 4
+	mult $s0, $t3				# get location of life to clear
+	mflo $t4 
+	add $t2, $t2, $t4
+	sw $zero, 4($t2)
+	sw $zero, 0($t2)
+	
+	# reduce life counter by 1
+	addi $s0, $s0, -1
+	# if life counter reaches 0, end program
+	blez $s0, END
+	
+	jal clear_lg
+	
+	# get new position for large asteroid
+	li $t1, 128
+	li $v0, 42				# get a random number between 0 and 28
+	li $a0, 0
+	li $a1, 28
+	syscall
+	
+	addi $a0, $a0, 3			# get the starting address of a large asteroid
+	mult $t1, $a0
+	mflo $t2
+	addi $t2, $t2, -8
+	
+	li $s4, BASE_ADDRESS			# $s4 stores the center of a large asteroid
+	add $s4, $s4, $t2
+	
+	# restore $ra
+	add $ra, $s2, $zero
+	# jump to $ra
+	jr $ra
+	
 	
 update_asteroid:
 	# advance asteroids closer to the ship
