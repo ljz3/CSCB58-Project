@@ -49,10 +49,13 @@
 #
 .eqv BASE_ADDRESS	0x10008000
 .eqv SHIP_HEAD		0x10008818
+.data
+newline: .asciiz  "\n"
 .text
 main:	li $t0, BASE_ADDRESS			# $t0 stores the base address for display
 	li $s7, SHIP_HEAD			# $s7 stores the head of the ship
 	li $s0, 3				# $s0 stores the amount of lives the player has
+	li $s1, 0				# reset score of player
 	
 	# initial position of small asteroid
 	li $v0, 42				# get a random number between 0 and 28
@@ -121,6 +124,8 @@ cont:
 	jal draw_asteroids
 
 	li $v0, 32 				# sleep for 50ms
+	li $t5, 25
+	div $s1, $t5
 	li $a0, 50
 	syscall
 	jal check_collision
@@ -857,6 +862,10 @@ END:
 	
 	li $v0, 1
 	move $a0, $s1     			# print out user's final score
+	syscall
+	
+	li $v0, 4     				# print out a line break
+	la $a0, newline
 	syscall
 	
 end_loop:
