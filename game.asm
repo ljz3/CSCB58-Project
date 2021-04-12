@@ -12,7 +12,7 @@
 # -Display height in pixels: 256 (update this as needed)
 # -Base Address for Display: 0x10008000 ($gp)
 #
-# Which milestoneshave beenreached in this submission?
+# Which milestones have been reached in this submission?
 # (See the assignment handout for descriptions of the milestones)
 # -Milestone 4 (choose the one the applies)
 #
@@ -22,11 +22,13 @@
 # 2. c. Scoring system: add a score to the game based on survival time
 # 3. g. Smooth graphics: prevent flicker by carefully erasing and/or redrawing 
 #	only the parts to the frame buffer that have changed
-
+#
 #
 # Link to video demonstration for final submission:
 # -(insert YouTube / MyMedia / other URL here). Make sure we can view it!
 # https://www.youtube.com/watch?v=0LnVvQDiJtc
+# (Demo video is unlisted)
+#
 # Are you OK with us sharing the video with people outside course staff?
 # - yes, and please share this project github link as well!
 #	https://github.com/ljz3/CSCB58-Project
@@ -34,6 +36,9 @@
 #
 # Any additional information that the TA needs to know:
 # -(write here, if any)
+# - I forgot to mention in the video, but the score increases by 1 for each iteration of the main loop
+# - I managed to make the graphics smooth by only clearing the asteroids and ship, and not the whole screen
+#   Also by just using the s registers, I save a lot of time by not accessing the stack often as stated in the video
 ######################################################################
 
 
@@ -111,7 +116,7 @@ main:	li $t0, BASE_ADDRESS			# $t0 stores the base address for display
 
 
 loop:	
-	addi $s1, $s1, 1
+	addi $s1, $s1, 1			# adds 1 to the player score
 	add $t8, $zero, $zero			# reset user input register
 	# takes in user input
 	li $t9, 0xffff0000 
@@ -148,7 +153,7 @@ keypress_happened:
 	
 clear_display:
 	add $s3, $ra, $zero
-	
+	# calls each object clear function
 	jal clear_ship
 	jal clear_sm
 	jal clear_md
@@ -157,6 +162,7 @@ clear_display:
 	jr $ra
 	
 clear_screen:
+	# this function just clears the entire screen by looping through all the addresses
 	li $t0, BASE_ADDRESS
 	li $t1, 1024
 clear_loop:
@@ -298,7 +304,7 @@ check_collision:
 	mfhi $t9				# store x coordinate of ship in $t9
 	
 	div $s6, $t8
-	mfhi $t7				# store x coordinate of small asteroid in $t9
+	mfhi $t7				# store x coordinate of small asteroid in $t7
 	
 	sub $t6, $t9, $t7
 	bltz $t6, col_md_st			# branch to next asteroid if x axis is not close
@@ -308,7 +314,7 @@ check_collision:
 	mflo $t9				# store y coordinate of ship in $t9
 	
 	div $s6, $t8
-	mflo $t7				# store y coordinate of small asteroid in $t9
+	mflo $t7				# store y coordinate of small asteroid in $t7
 	
 	sub $t6, $t9, $t7			# get the y axis difference of the ship and small asteroid
 	addi $t6, $t6, -2
@@ -328,7 +334,7 @@ col_md_st:
 	mfhi $t9				# store x coordinate of ship in $t9
 	
 	div $s5, $t8
-	mfhi $t7				# store x coordinate of small asteroid in $t9
+	mfhi $t7				# store x coordinate of medium asteroid in $t7
 	
 	sub $t6, $t9, $t7
 	bltz $t6, col_lg_st			# branch to next asteroid if x axis is not close
@@ -338,7 +344,7 @@ col_md_st:
 	mflo $t9				# store y coordinate of ship in $t9
 	
 	div $s5, $t8
-	mflo $t7				# store y coordinate of small asteroid in $t9
+	mflo $t7				# store y coordinate of medium asteroid in $t7
 	
 	sub $t6, $t9, $t7			# get the y axis difference of the ship and small asteroid
 	addi $t6, $t6, -3
@@ -358,7 +364,7 @@ col_lg_st:
 	mfhi $t9				# store x coordinate of ship in $t9
 	
 	div $s4, $t8
-	mfhi $t7				# store x coordinate of small asteroid in $t9
+	mfhi $t7				# store x coordinate of large asteroid in $t7
 	
 	sub $t6, $t9, $t7
 	bltz $t6, collision_end			# branch to next asteroid if x axis is not close
@@ -368,7 +374,7 @@ col_lg_st:
 	mflo $t9				# store y coordinate of ship in $t9
 	
 	div $s4, $t8
-	mflo $t7				# store y coordinate of small asteroid in $t9
+	mflo $t7				# store y coordinate of large asteroid in $t7
 	
 	sub $t6, $t9, $t7			# get the y axis difference of the ship and small asteroid
 	addi $t6, $t6, -3
