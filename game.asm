@@ -27,8 +27,10 @@
 # Link to video demonstration for final submission:
 # -(insert YouTube / MyMedia / other URL here). Make sure we can view it!
 #
-#Are you OKwith us sharing the video with people outside course staff?
-# -yes / no/ yes, and please share this project githublink as well!
+#Are you OK with us sharing the video with people outside course staff?
+# - yes, and please share this project github link as well!
+#	https://github.com/ljz3/CSCB58-Project
+#	(link is private until approval)
 #
 # Any additional information that the TA needs to know:
 # -(write here, if any)
@@ -118,8 +120,8 @@ cont:
 	jal draw_ship
 	jal draw_asteroids
 
-	li $v0, 32 				# sleep for 30ms
-	li $a0, 30
+	li $v0, 32 				# sleep for 50ms
+	li $a0, 50
 	syscall
 	jal check_collision
 	jal clear_display
@@ -501,7 +503,13 @@ update_asteroid:
 	addi $s6, $s6, -4 
 	addi $s5, $s5, -4
 	addi $s4, $s4, -4
-	
+	blt $s1, 500, update_cont
+	addi $s6, $s6, -4 
+	blt $s1, 750, update_cont
+	addi $s5, $s5, -4 
+	blt $s1, 1000, update_cont
+	addi $s4, $s4, -4 
+update_cont:	
 	# check if small asteroid is out of bounds
 	li $t1, 128
 	div $s6, $t1
