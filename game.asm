@@ -26,8 +26,8 @@
 #
 # Link to video demonstration for final submission:
 # -(insert YouTube / MyMedia / other URL here). Make sure we can view it!
-#
-#Are you OK with us sharing the video with people outside course staff?
+# https://www.youtube.com/watch?v=0LnVvQDiJtc
+# Are you OK with us sharing the video with people outside course staff?
 # - yes, and please share this project github link as well!
 #	https://github.com/ljz3/CSCB58-Project
 #	(link is private until approval)
@@ -123,10 +123,12 @@ cont:
 	jal draw_ship
 	jal draw_asteroids
 
-	li $v0, 32 				# sleep for 50ms
-	li $t5, 25
+	li $v0, 32 				# sleep for 50ms base, lower for harder difficulty
+	li $t5, 50				# get how much to reduce delay by
 	div $s1, $t5
-	li $a0, 50
+	mflo $t5
+	li $a0, 50				# base difficulty is at 50ms delay
+	sub $a0, $a0, $t5
 	syscall
 	jal check_collision
 	jal clear_display
@@ -508,13 +510,7 @@ update_asteroid:
 	addi $s6, $s6, -4 
 	addi $s5, $s5, -4
 	addi $s4, $s4, -4
-	blt $s1, 500, update_cont
-	addi $s6, $s6, -4 
-	blt $s1, 750, update_cont
-	addi $s5, $s5, -4 
-	blt $s1, 1000, update_cont
-	addi $s4, $s4, -4 
-update_cont:	
+
 	# check if small asteroid is out of bounds
 	li $t1, 128
 	div $s6, $t1
